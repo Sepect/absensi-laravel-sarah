@@ -12,7 +12,7 @@
 <body>
 
 <!-- Mobile Sidebar Overlay -->
-<div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-50 hidden lg:hidden" onclick="toggleSidebar()"></div>
+<div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
 
 <!-- Sidebar -->
 <aside id="sidebar" class="sidebar">
@@ -108,11 +108,6 @@
         </div>
 
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <!-- Notifications -->
-            <button style="position: relative; background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: var(--radius-md); color: var(--slate-500);">
-                <span class="material-symbols-outlined" style="font-size: 22px;">notifications</span>
-                <span style="position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 2px solid var(--surface);"></span>
-            </button>
 
             <!-- User Avatar -->
             <div class="avatar avatar-primary" style="cursor: pointer;">

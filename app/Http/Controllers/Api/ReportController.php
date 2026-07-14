@@ -23,7 +23,7 @@ class ReportController extends Controller
         $user = $request->user();
         $internProfile = $user->internProfile;
 
-        if (!$internProfile) {
+        if (! $internProfile) {
             return response()->json([
                 'success' => false,
                 'message' => 'Profil peserta tidak ditemukan.',
@@ -44,7 +44,7 @@ class ReportController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $reports->map(fn($report) => $this->formatReport($report)),
+            'data' => $reports->map(fn ($report) => $this->formatReport($report)),
         ]);
     }
 
@@ -57,7 +57,7 @@ class ReportController extends Controller
         $user = $request->user();
         $internProfile = $user->internProfile;
 
-        if (!$internProfile) {
+        if (! $internProfile) {
             return response()->json([
                 'success' => false,
                 'message' => 'Profil peserta tidak ditemukan.',
@@ -68,7 +68,7 @@ class ReportController extends Controller
             ->where('report_date', $date)
             ->first();
 
-        if (!$report) {
+        if (! $report) {
             return response()->json([
                 'success' => false,
                 'message' => 'Laporan tidak ditemukan.',
@@ -95,7 +95,7 @@ class ReportController extends Controller
         $user = $request->user();
         $internProfile = $user->internProfile;
 
-        if (!$internProfile) {
+        if (! $internProfile) {
             return response()->json([
                 'success' => false,
                 'message' => 'Profil peserta tidak ditemukan.',
@@ -140,7 +140,7 @@ class ReportController extends Controller
         $user = $request->user();
         $internProfile = $user->internProfile;
 
-        if (!$internProfile) {
+        if (! $internProfile) {
             return response()->json([
                 'success' => false,
                 'message' => 'Profil peserta tidak ditemukan.',
@@ -151,7 +151,7 @@ class ReportController extends Controller
             ->where('id', $id)
             ->first();
 
-        if (!$report) {
+        if (! $report) {
             return response()->json([
                 'success' => false,
                 'message' => 'Laporan tidak ditemukan.',
@@ -168,6 +168,8 @@ class ReportController extends Controller
 
         $report->update([
             'description' => $request->description,
+            // Re-editing a report (e.g. after it was rejected) sends it back for review.
+            'status' => DailyReport::STATUS_PENDING,
         ]);
 
         return response()->json([
@@ -187,6 +189,7 @@ class ReportController extends Controller
             'report_date' => $report->report_date->toDateString(),
             'description' => $report->description,
             'is_approved' => $report->is_approved,
+            'status' => $report->status,
             'created_at' => $report->created_at->toIso8601String(),
             'updated_at' => $report->updated_at->toIso8601String(),
         ];

@@ -34,7 +34,6 @@
             <select name="status" style="width: 100%; padding: 0.625rem 2.5rem 0.625rem 0.75rem; border: 1.5px solid var(--slate-200); border-radius: var(--radius-md); font-size: 0.875rem; background: white; cursor: pointer;">
                 <option value="all" {{ $status === 'all' ? 'selected' : '' }}>Semua</option>
                 <option value="aktif" {{ $status === 'aktif' ? 'selected' : '' }}>Aktif</option>
-                <option value="nonaktif" {{ $status === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
                 <option value="selesai" {{ $status === 'selesai' ? 'selected' : '' }}>Selesai</option>
             </select>
         </div>

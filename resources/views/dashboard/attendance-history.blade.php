@@ -19,6 +19,24 @@
     </form>
 </div>
 
+<!-- Export by Date Range -->
+<div class="card" style="padding: 1rem; margin-bottom: 1.5rem;">
+    <form method="GET" action="{{ route('admin.attendance.export') }}" style="display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap;">
+        <div>
+            <label style="display: block; font-size: 0.8125rem; font-weight: 600; color: var(--slate-600); margin-bottom: 0.375rem;">Ekspor Dari Tanggal</label>
+            <input type="date" name="start_date" value="{{ request('start_date', $date) }}" class="form-input" style="padding: 0.625rem 0.75rem;" required>
+        </div>
+        <div>
+            <label style="display: block; font-size: 0.8125rem; font-weight: 600; color: var(--slate-600); margin-bottom: 0.375rem;">Sampai Tanggal</label>
+            <input type="date" name="end_date" value="{{ request('end_date', $date) }}" class="form-input" style="padding: 0.625rem 0.75rem;" required>
+        </div>
+        <button type="submit" class="btn btn-ghost" style="padding: 0.625rem 1.25rem; border: 1px solid var(--slate-200); color: var(--success, #16a34a);">
+            <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
+            Export Excel
+        </button>
+    </form>
+</div>
+
 <!-- Attendance Table -->
 <div class="card">
     <div class="table-wrapper">

@@ -65,34 +65,53 @@
                             </div>
                         </td>
                         <td style="max-width: 300px;">
-                            <p style="font-size: 0.8125rem; color: var(--slate-600); line-clamp: 2; line-clamp: 2; -webkit-line-clamp: 2; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical;">
+                            @php($isLongReport = mb_strlen($report->description) > 100)
+                            <p id="report-short-{{ $report->id }}" style="font-size: 0.8125rem; color: var(--slate-600);">
                                 {{ Str::limit($report->description, 100) }}
                             </p>
-                            <p style="font-size: 0.75rem; color: var(--slate-400); margin-top: 0.25rem;">
-                                {{ str_word_count($report->description) }} kata
+                            <p id="report-full-{{ $report->id }}" style="display: none; font-size: 0.8125rem; color: var(--slate-600); white-space: pre-line;">
+                                {{ $report->description }}
                             </p>
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.25rem;">
+                                <p style="font-size: 0.75rem; color: var(--slate-400);">
+                                    {{ str_word_count($report->description) }} kata
+                                </p>
+                                @if($isLongReport)
+                                    <button type="button" onclick="toggleReport({{ $report->id }})" class="btn btn-ghost" style="padding: 0.125rem 0.5rem; font-size: 0.75rem; color: var(--primary); display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <span id="report-toggle-text-{{ $report->id }}">Selengkapnya</span>
+                                        <span class="material-symbols-outlined" id="report-toggle-icon-{{ $report->id }}" style="font-size: 16px;">expand_more</span>
+                                    </button>
+                                @endif
+                            </div>
                         </td>
                         <td>
-                            @if($report->is_approved)
-                                <span class="badge badge-success">Disetujui</span>
-                            @else
-                                <span class="badge badge-warning">Pending</span>
-                            @endif
+                            <span class="badge {{ $report->getStatusBadgeClass() }}">{{ $report->getStatusLabel() }}</span>
                         </td>
                         <td style="text-align: right;">
-                            @if(!$report->is_approved)
-                                <form action="{{ route('admin.reports.approve', $report->id) }}" method="POST" style="display: inline;">
-                                    @csrf
-                                    <button type="submit" class="btn btn-ghost" style="padding: 0.5rem 0.75rem; font-size: 0.8125rem;">
-                                        <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">check</span>
-                                        Approve
-                                    </button>
-                                </form>
-                            @else
+                            @if($report->isApproved())
                                 <span style="font-size: 0.75rem; color: var(--slate-400);">
                                     <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">verified</span>
                                     {{ $report->approver?->nama ?? '' }}
                                 </span>
+                            @else
+                                <div style="display: inline-flex; align-items: center; gap: 0.25rem; justify-content: flex-end;">
+                                    <form action="{{ route('admin.reports.approve', $report->id) }}" method="POST" style="display: inline;">
+                                        @csrf
+                                        <button type="submit" class="btn btn-ghost" style="padding: 0.5rem 0.75rem; font-size: 0.8125rem; color: var(--success, #16a34a);">
+                                            <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">check</span>
+                                            Setujui
+                                        </button>
+                                    </form>
+                                    @unless($report->isRejected())
+                                        <form action="{{ route('admin.reports.reject', $report->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Tolak laporan ini?')">
+                                            @csrf
+                                            <button type="submit" class="btn btn-ghost" style="padding: 0.5rem 0.75rem; font-size: 0.8125rem; color: var(--danger);">
+                                                <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">close</span>
+                                                Tolak
+                                            </button>
+                                        </form>
+                                    @endunless
+                                </div>
                             @endif
                         </td>
                     </tr>
@@ -115,3 +134,20 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function toggleReport(id) {
+        const shortEl = document.getElementById('report-short-' + id);
+        const fullEl = document.getElementById('report-full-' + id);
+        const textEl = document.getElementById('report-toggle-text-' + id);
+        const iconEl = document.getElementById('report-toggle-icon-' + id);
+        const isCollapsed = fullEl.style.display === 'none';
+
+        fullEl.style.display = isCollapsed ? 'block' : 'none';
+        shortEl.style.display = isCollapsed ? 'none' : 'block';
+        textEl.textContent = isCollapsed ? 'Sembunyikan' : 'Selengkapnya';
+        iconEl.textContent = isCollapsed ? 'expand_less' : 'expand_more';
+    }
+</script>
+@endpush

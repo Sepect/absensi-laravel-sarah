@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
@@ -25,7 +26,8 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (!auth()->guard('admin')->attempt($credentials)) {
+        // Only admin accounts may authenticate on the web panel; interns use the mobile app/API.
+        if (! auth()->guard('admin')->attempt([...$credentials, 'role' => User::ROLE_ADMIN])) {
             return back()
                 ->withInput()
                 ->withErrors(['email' => 'Email atau kata sandi tidak valid.']);

@@ -32,6 +32,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/attendance/qrcode', [DashboardController::class, 'qrcode'])->name('admin.attendance.qrcode');
     Route::get('/attendance', [DashboardController::class, 'attendanceHistory'])->name('admin.attendance.index');
     Route::get('/attendance/history', [DashboardController::class, 'attendanceHistory'])->name('admin.attendance.history');
+    Route::get('/attendance/export', [DashboardController::class, 'exportAttendance'])->name('admin.attendance.export');
 
     // Interns
     Route::get('/interns', [DashboardController::class, 'interns'])->name('admin.interns.index');
@@ -44,6 +45,7 @@ Route::middleware('auth:admin')->group(function () {
     // Reports
     Route::get('/reports', [DashboardController::class, 'reports'])->name('admin.reports.index');
     Route::post('/reports/{id}/approve', [DashboardController::class, 'approveReport'])->name('admin.reports.approve');
+    Route::post('/reports/{id}/reject', [DashboardController::class, 'rejectReport'])->name('admin.reports.reject');
     Route::get('/reports/export', [DashboardController::class, 'exportReports'])->name('admin.reports.export');
 
     // Izin

@@ -278,7 +278,7 @@
                 <div class="logo">
                     <span class="material-symbols-outlined logo-icon">fingerprint</span>
                 </div>
-                <h1 class="company-name">PT. Anchor Precision Indonesia</h1>
+                <h1 class="company-name">{{ $instansi->nama_instansi }}</h1>
                 <p class="subtitle">Scan QR Code untuk Absensi Masuk/Pulang</p>
             </div>
 
@@ -351,11 +351,11 @@
         function updateServerClock() {
             const elapsed = Date.now() - localStartTime;
             const currentServerTime = new Date(serverTimestamp + elapsed);
-            
+
             const hours = String(currentServerTime.getHours()).padStart(2, '0');
             const minutes = String(currentServerTime.getMinutes()).padStart(2, '0');
             const seconds = String(currentServerTime.getSeconds()).padStart(2, '0');
-            
+
             const timeStr = `${hours}:${minutes}:${seconds}`;
             const serverTimeEl = document.getElementById('server-time');
             if (serverTimeEl) {
@@ -385,9 +385,9 @@
             if (timerId) {
                 clearTimeout(timerId);
             }
-            
+
             document.getElementById('countdown').textContent = "--:--";
-            
+
             try {
                 // Ambil data QR Code dan statistik terbaru secara asynchronous (AJAX)
                 const response = await fetch(window.location.href, {
@@ -396,30 +396,30 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
-                
+
                 if (!response.ok) {
                     throw new Error('Gagal memuat QR Code baru');
                 }
-                
+
                 const data = await response.json();
-                
+
                 // 1. Update gambar QR Code
                 document.querySelector('.qr-image').src = data.qrImage;
-                
+
                 // Sync server clock timestamp to prevent drift
                 if (data.serverTimestamp) {
                     serverTimestamp = data.serverTimestamp;
                     localStartTime = Date.now();
                     updateServerClock();
                 }
-                
+
                 // 2. Update statistik absensi hari ini
                 updateStatsUI(data.summary);
-                
+
                 // 3. Reset countdown timer
                 remaining = data.timeRemaining > 0 ? data.timeRemaining : (data.qrExpiryMinutes ? data.qrExpiryMinutes * 60 : defaultFallbackSeconds);
                 updateCountdown();
-                
+
             } catch (error) {
                 console.error(error);
                 document.getElementById('countdown').textContent = "Retrying...";
@@ -431,13 +431,13 @@
         function updateStatsUI(stats) {
             const successVal = document.querySelector('.info-box.success .info-value');
             if (successVal) successVal.textContent = stats.checked_in;
-            
+
             const primaryVal = document.querySelector('.info-box.primary .info-value');
             if (primaryVal) primaryVal.textContent = stats.checked_out;
-            
+
             const warningVal = document.querySelector('.info-box.warning .info-value');
             if (warningVal) warningVal.textContent = stats.terlambat;
-            
+
             const dangerVal = document.querySelector('.info-box.danger .info-value');
             if (dangerVal) dangerVal.textContent = stats.alpha;
         }

@@ -19,11 +19,11 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div>
                     <label style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.375rem;">Email</label>
-                    <input type="email" value="{{ $intern->user->email }}" class="form-input" style="padding: 0.75rem; opacity: 0.7;" readonly>
+                    <input type="email" name="email" value="{{ $intern->user->email }}" class="form-input" style="padding: 0.75rem; opacity: 0.7;" readonly>
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.375rem;">NIM/NIS</label>
-                    <input type="text" value="{{ $intern->nim_nis }}" class="form-input" style="padding: 0.75rem; opacity: 0.7;" readonly>
+                    <input type="text" name="nis" value="{{ $intern->nim_nis }}" class="form-input" style="padding: 0.75rem; opacity: 0.7;" readonly>
                 </div>
                 <div style="grid-column: span 2;">
                     <label style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.375rem;">Nama Lengkap *</label>
@@ -64,7 +64,6 @@
                     <label style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.375rem;">Status</label>
                     <select name="status" class="form-input form-select" style="padding: 0.75rem;">
                         <option value="aktif" {{ $intern->status === 'aktif' ? 'selected' : '' }}>Aktif</option>
-                        <option value="nonaktif" {{ $intern->status === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
                         <option value="selesai" {{ $intern->status === 'selesai' ? 'selected' : '' }}>Selesai</option>
                     </select>
                 </div>

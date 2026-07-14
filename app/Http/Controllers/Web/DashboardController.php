@@ -2,13 +2,20 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Exports\AttendanceExport;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\DailyReport;
 use App\Models\InternProfile;
+use App\Models\IzinRequest;
+use App\Models\OfficeSetting;
+use App\Models\User;
 use App\Services\AttendanceService;
 use App\Services\QRCodeService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DashboardController extends Controller
 {
@@ -27,7 +34,7 @@ class DashboardController extends Controller
 
         // Get pending reports count
         $pendingReports = DailyReport::pending()->count();
-        $pendingIzin = \App\Models\IzinRequest::pending()->count();
+        $pendingIzin = IzinRequest::pending()->count();
 
         return view('dashboard.index', compact(
             'summary',
@@ -53,18 +60,39 @@ class DashboardController extends Controller
     }
 
     /**
+     * Export attendance history to an Excel (.xlsx) file.
+     */
+    public function exportAttendance(Request $request): BinaryFileResponse
+    {
+        $startDate = $request->get('start_date', $request->get('date', now()->toDateString()));
+        $endDate = $request->get('end_date', $startDate);
+
+        // Ensure the range is ordered chronologically even if the inputs are swapped.
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        $filename = $startDate === $endDate
+            ? 'riwayat-absensi-'.$startDate.'.xlsx'
+            : 'riwayat-absensi-'.$startDate.'_sd_'.$endDate.'.xlsx';
+
+        return Excel::download(new AttendanceExport($startDate, $endDate), $filename);
+    }
+
+    /**
      * QR Code Generator (Full Screen)
      */
     public function qrcode(Request $request)
     {
         $type = $request->get('type', 'in');
+        $instansi = OfficeSetting::first();
 
         $qrData = $this->qrCodeService->getActiveQRCode($type);
         $qrImage = $this->qrCodeService->generateImage($qrData['data']);
         $timeRemaining = $this->qrCodeService->getTimeRemaining($type);
 
         $summary = $this->attendanceService->getTodaySummary();
-        $office = \App\Models\OfficeSetting::getActive();
+        $office = OfficeSetting::getActive();
         $qrExpiryMinutes = $office->qr_expiry_minutes ?? 5;
 
         $timezone = config('app.timezone', 'Asia/Jakarta');
@@ -91,7 +119,7 @@ class DashboardController extends Controller
             'type',
             'summary',
             'qrExpiryMinutes',
-            'timezoneAbbr'
+            'timezoneAbbr', 'instansi'
         ));
     }
 
@@ -106,7 +134,7 @@ class DashboardController extends Controller
         $query = InternProfile::query();
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nama_lengkap', 'like', "%{$search}%")
                     ->orWhere('nim_nis', 'like', "%{$search}%");
             });
@@ -151,10 +179,10 @@ class DashboardController extends Controller
         $validated['password'] = bcrypt($validated['password']);
 
         // Create user first
-        $user = \App\Models\User::create([
+        $user = User::create([
             'email' => $validated['email'],
             'password' => $validated['password'],
-            'role' => \App\Models\User::ROLE_INTERN,
+            'role' => User::ROLE_INTERN,
         ]);
 
         // Then create intern profile
@@ -183,6 +211,7 @@ class DashboardController extends Controller
     public function editIntern($id)
     {
         $intern = InternProfile::with('user')->findOrFail($id);
+
         return view('dashboard.interns.edit', compact('intern'));
     }
 
@@ -195,7 +224,7 @@ class DashboardController extends Controller
 
         $validated = $request->validate([
             'nama_lengkap' => 'required|string|max:255',
-            'email' => 'nullable|email|unique:users,email,' . $intern->user_id,
+            'email' => 'nullable|email|unique:users,email,'.$intern->user_id,
             'password' => 'nullable|string|min:6',
             'asal_sekolah_kampus' => 'required|string|max:255',
             'no_telp' => 'nullable|string|max:20',
@@ -204,7 +233,7 @@ class DashboardController extends Controller
             'kontak_darurat' => 'nullable|string|max:20',
             'tanggal_mulai' => 'nullable|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
-            'status' => 'required|in:aktif,nonaktif,selesai',
+            'status' => 'required|in:aktif,selesai',
         ]);
 
         // Update user email/password if provided
@@ -225,8 +254,8 @@ class DashboardController extends Controller
             'nama_pembimbing' => $validated['nama_pembimbing'],
             'alamat' => $validated['alamat'],
             'kontak_darurat' => $validated['kontak_darurat'],
-            'tanggal_mulai' => $validated['tanggal_mulai'],
-            'tanggal_selesai' => $validated['tanggal_selesai'],
+            // 'tanggal_mulai' => $validated['tanggal_mulai'],
+            // 'tanggal_selesai' => $validated['tanggal_selesai'],
             'status' => $validated['status'],
         ]);
 
@@ -275,10 +304,26 @@ class DashboardController extends Controller
         $report = DailyReport::findOrFail($id);
         $report->update([
             'is_approved' => true,
-            'approved_by' => auth()->id(),
+            'status' => DailyReport::STATUS_DISETUJUI,
+            'approved_by' => auth()->user()->adminProfile?->id,
         ]);
 
         return back()->with('success', 'Laporan berhasil disetujui.');
+    }
+
+    /**
+     * Reject report
+     */
+    public function rejectReport($id)
+    {
+        $report = DailyReport::findOrFail($id);
+        $report->update([
+            'is_approved' => false,
+            'status' => DailyReport::STATUS_DITOLAK,
+            'approved_by' => auth()->user()->adminProfile?->id,
+        ]);
+
+        return back()->with('success', 'Laporan berhasil ditolak.');
     }
 
     /**
@@ -288,7 +333,7 @@ class DashboardController extends Controller
     {
         $status = $request->get('status', 'pending');
 
-        $query = \App\Models\IzinRequest::with('internProfile');
+        $query = IzinRequest::with('internProfile');
 
         if ($status !== 'all') {
             $query->where('status', $status);
@@ -304,7 +349,7 @@ class DashboardController extends Controller
      */
     public function reviewIzin(Request $request, $id)
     {
-        $izinRequest = \App\Models\IzinRequest::findOrFail($id);
+        $izinRequest = IzinRequest::findOrFail($id);
 
         $validated = $request->validate([
             'action' => 'required|in:approve,reject',
@@ -320,14 +365,14 @@ class DashboardController extends Controller
 
         // If approved, automatically create/update attendance records with status 'izin'
         if ($status === 'disetujui') {
-            $startDate = \Carbon\Carbon::parse($izinRequest->tanggal_mulai);
-            $endDate = \Carbon\Carbon::parse($izinRequest->tanggal_selesai);
+            $startDate = Carbon::parse($izinRequest->tanggal_mulai);
+            $endDate = Carbon::parse($izinRequest->tanggal_selesai);
 
             $currentDate = $startDate->copy();
             while ($currentDate->lte($endDate)) {
                 $dateStr = $currentDate->toDateString();
 
-                \App\Models\Attendance::updateOrCreate(
+                Attendance::updateOrCreate(
                     [
                         'intern_id' => $izinRequest->intern_id,
                         'attendance_date' => $dateStr,
@@ -349,7 +394,8 @@ class DashboardController extends Controller
      */
     public function settings()
     {
-        $settings = \App\Models\OfficeSetting::getActive();
+        $settings = OfficeSetting::getActive();
+
         return view('dashboard.settings.index', compact('settings'));
     }
 
@@ -368,7 +414,7 @@ class DashboardController extends Controller
             'qr_expiry_minutes' => 'required|integer|min:1|max:60',
         ]);
 
-        $settings = \App\Models\OfficeSetting::getActive();
+        $settings = OfficeSetting::getActive();
         $settings->update($validated);
 
         // Force refresh QR codes

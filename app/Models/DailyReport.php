@@ -15,6 +15,7 @@ class DailyReport extends Model
         'report_date',
         'description',
         'is_approved',
+        'status',
         'approved_by',
     ];
 
@@ -22,6 +23,22 @@ class DailyReport extends Model
         'report_date' => 'date',
         'is_approved' => 'boolean',
     ];
+
+    /**
+     * @var array<string, string>
+     */
+    protected $attributes = [
+        'status' => self::STATUS_PENDING,
+    ];
+
+    /**
+     * Status constants
+     */
+    const STATUS_PENDING = 'pending';
+
+    const STATUS_DISETUJUI = 'disetujui';
+
+    const STATUS_DITOLAK = 'ditolak';
 
     /**
      * Get the intern profile who wrote this report
@@ -44,7 +61,47 @@ class DailyReport extends Model
      */
     public function isApproved(): bool
     {
-        return $this->is_approved;
+        return $this->status === self::STATUS_DISETUJUI;
+    }
+
+    /**
+     * Check if report is pending review
+     */
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Check if report is rejected
+     */
+    public function isRejected(): bool
+    {
+        return $this->status === self::STATUS_DITOLAK;
+    }
+
+    /**
+     * Get the Indonesian status label
+     */
+    public function getStatusLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_DISETUJUI => 'Disetujui',
+            self::STATUS_DITOLAK => 'Ditolak',
+            default => 'Menunggu',
+        };
+    }
+
+    /**
+     * Get the badge CSS class for the current status
+     */
+    public function getStatusBadgeClass(): string
+    {
+        return match ($this->status) {
+            self::STATUS_DISETUJUI => 'badge-success',
+            self::STATUS_DITOLAK => 'badge-danger',
+            default => 'badge-warning',
+        };
     }
 
     /**
@@ -69,7 +126,7 @@ class DailyReport extends Model
     public function getTruncatedDescription(int $length = 100): string
     {
         return strlen($this->description) > $length
-            ? substr($this->description, 0, $length) . '...'
+            ? substr($this->description, 0, $length).'...'
             : $this->description;
     }
 
@@ -78,7 +135,7 @@ class DailyReport extends Model
      */
     public function scopePending($query)
     {
-        return $query->where('is_approved', false);
+        return $query->where('status', self::STATUS_PENDING);
     }
 
     /**
@@ -86,7 +143,15 @@ class DailyReport extends Model
      */
     public function scopeApproved($query)
     {
-        return $query->where('is_approved', true);
+        return $query->where('status', self::STATUS_DISETUJUI);
+    }
+
+    /**
+     * Scope for rejected reports
+     */
+    public function scopeRejected($query)
+    {
+        return $query->where('status', self::STATUS_DITOLAK);
     }
 
     /**

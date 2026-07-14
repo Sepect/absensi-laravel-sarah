@@ -2,7 +2,7 @@
 
 @section('title', 'Dashboard')
 @section('page-title', 'Dashboard')
-@section('page-subtitle', now()->translatedFormat('dddd, D MMMM Y'))
+@section('page-subtitle', now()->translatedFormat('d M Y'))
 
 @section('content')
 <!-- Stats Grid -->
@@ -198,11 +198,6 @@
                    style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem; background: var(--slate-100); color: var(--slate-700); border-radius: var(--radius-lg); text-decoration: none; font-weight: 500;">
                     <span class="material-symbols-outlined">person_add</span>
                     Tambah Peserta
-                </a>
-                <a href="{{ route('admin.reports.export') }}"
-                   style="display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem; background: var(--slate-100); color: var(--slate-700); border-radius: var(--radius-lg); text-decoration: none; font-weight: 500;">
-                    <span class="material-symbols-outlined">download</span>
-                    Export Laporan
                 </a>
             </div>
         </div>
